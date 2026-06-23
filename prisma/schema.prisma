@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  role      String   @default("driver") // admin, manager, driver
+  avatar    String?
+  city      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedDeliveries Delivery[]   @relation("DriverDeliveries")
+  managedVehicles    Vehicle[]    @relation("ManagerVehicles")
+}
+
+model City {
+  id          String @id @default(cuid())
+  name        String
+  state       String
+  type        String @default("metro") // metro, tier2
+  lat         Float
+  lng         Float
+  timezone    String @default("Asia/Kolkata")
+  isActive    Boolean @default(true)
+
+  vehicles   Vehicle[]
+  deliveries Delivery[]
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  vehicleNo   String   @unique
+  type        String   @default("truck") // truck, van, bike, tempo
+  capacity    Float    @default(500) // kg
+  fuelType    String   @default("diesel")
+  status      String   @default("available") // available, in_transit, maintenance
+  currentLat  Float?
+  currentLng  Float?
+  lastUpdate  DateTime?
+  totalKms    Float    @default(0)
+  fuelEfficiency Float  @default(8.0) // km/l
+
+  cityId     String
+  city       City     @relation(fields: [cityId], references: [id])
+  driverId   String?
+  driver     User?    @relation("ManagerVehicles", fields: [driverId], references: [id])
+
+  deliveries Delivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Delivery {
+  id            String   @id @default(cuid())
+  trackingNo    String   @unique
+  status        String   @default("pending") // pending, assigned, in_transit, delivered, failed
+  priority      String   @default("medium") // low, medium, high, urgent
+
+  pickupAddress   String
+  pickupLat       Float
+  pickupLng       Float
+  pickupCity      String
+
+  dropoffAddress  String
+  dropoffLat      Float
+  dropoffLng      Float
+  dropoffCity     String
+
+  estimatedDistance Float  @default(0) // km
+  estimatedTime    Float  @default(0) // minutes
+  actualDistance    Float?
+  actualTime       Float?
+
+  scheduledPickup  DateTime?
+  scheduledDelivery DateTime?
+  actualPickup     DateTime?
+  actualDelivery   DateTime?
+
+  recipientName    String
+  recipientPhone   String
+  recipientPincode String
+
+  weight       Float?
+  codAmount    Float?
+  remarks      String?
+
+  currentLat   Float?
+  currentLng   Float?
+
+  cityId       String
+  city         City     @relation(fields: [cityId], references: [id])
+  vehicleId    String?
+  vehicle      Vehicle? @relation(fields: [vehicleId], references: [id])
+  driverId     String?
+  driver       User?    @relation("DriverDeliveries", fields: [driverId], references: [id])
+
+  trackingPoints TrackingPoint[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TrackingPoint {
+  id        String   @id @default(cuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  lat       Float
+  lng       Float
+  speed     Float    @default(0)
+  heading   Float    @default(0)
+  timestamp DateTime @default(now())
+}
