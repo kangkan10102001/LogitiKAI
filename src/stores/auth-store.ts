@@ -17,7 +17,7 @@ interface AuthState {
 const defaultAdmin: User = {
   id: 'u-admin-001',
   email: 'admin@logistikai.in',
-  name: 'Rajesh Sharma',
+  name: 'Kangkan Patowary',
   phone: '+91 98765 43210',
   role: 'admin',
   city: 'Delhi',
